@@ -1,3 +1,29 @@
+// Function to remove vowels from a string
+fn remove_vowels(input: String) -> String {
+    let vowels = ['a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U'];
+    input.chars()
+        .filter(|c| !vowels.contains(c))
+        .collect()
+}
+// Input struct for /test route
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct VowelInput {
+    input: String,
+}
+
+// Output struct for /test route
+#[derive(Serialize)]
+struct VowelOutput {
+    output: String,
+}
+
+// Handler for /test route
+async fn test_remove_vowels(Json(payload): Json<VowelInput>) -> Json<VowelOutput> {
+    let output = remove_vowels(payload.input);
+    Json(VowelOutput { output })
+}
 use axum::{
     routing::get,
     Router,
@@ -6,6 +32,7 @@ use axum::{
 use serde::Serialize;
 use std::net::SocketAddr;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
 
 // 1. Define a structured response object. 
 // Using a Struct ensures type safety and prevents leaking sensitive data.
@@ -31,7 +58,8 @@ async fn main() {
     // Modularity: You can split these into separate files later
     let app = Router::new()
         .route("/health", get(health_check)) // AWS ALB needs this!
-        .route("/hello", get(hello_world));
+        .route("/hello", get(hello_world))
+        .route("/test", axum::routing::post(test_remove_vowels));
 
     // 4. Bind to 0.0.0.0 (Required for Docker)
     let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
